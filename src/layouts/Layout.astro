@@ -1,23 +1,109 @@
+---
+import BackgroundToggle from '../components/BackgroundToggle.astro';
+import DotsBackground from '../components/DotsBackground.astro';
+import StreaksBackground from '../components/StreaksBackground.astro';
+import ThemeToggle from '../components/ThemeToggle.astro';
+import TunnelBackground from '../components/TunnelBackground.astro';
+---
+
 <!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width"/>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
-    <link rel="icon" href="/favicon.ico"/>
     <meta name="generator" content={Astro.generator}/>
     <title>Astro Basics</title>
+    <script is:inline>
+        document.documentElement.dataset.background = localStorage.getItem('background') ?? 'streaks';
+        document.addEventListener('contextmenu', (event) => event.preventDefault());
+        document.addEventListener('pointerdown', (event) => {
+            const button = event.button === 0 && event.target.closest('.button');
+            if(!button) return;
+            button.classList.add('pressed');
+            const release = () => button.classList.remove('pressed');
+            document.addEventListener('pointerup', release, {once: true});
+            document.addEventListener('pointercancel', release, {once: true});
+        });
+    </script>
 </head>
 <body>
+<StreaksBackground/>
+<DotsBackground/>
+<TunnelBackground/>
+<div class="controls">
+    <BackgroundToggle/>
+    <ThemeToggle/>
+</div>
 <slot/>
 </body>
 </html>
 
-<style>
+<style is:global>
+    :root {
+        color-scheme: light dark;
+        --bg: light-dark(#e5e5e5, #000000);
+        --fg: light-dark(#161616, #f0f0f0);
+        --card: light-dark(#f5f5f5, #141414);
+        --card-border: light-dark(#d6d6d6, #2a2a2a);
+        --accent: light-dark(#6025c4, #b56cff);
+        --streak: light-dark(rgb(96 37 196 / 0.9), #b56cff);
+    }
+
+    :root[data-theme='light'] {
+        color-scheme: light;
+    }
+
+    :root[data-theme='dark'] {
+        color-scheme: dark;
+    }
+
     html,
     body {
         margin: 0;
         width: 100%;
         height: 100%;
+    }
+
+    .controls {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        z-index: 1;
+        display: flex;
+        gap: 12px;
+    }
+
+    .control {
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        cursor: pointer;
+    }
+
+    .button {
+        border: 1px solid var(--card-border);
+        background-color: color-mix(in srgb, var(--fg) 4%, var(--card));
+        color: var(--fg);
+        transition: background-color 0.15s ease-out,
+        border-color 0.15s ease-out;
+    }
+
+    .button:hover {
+        background-color: color-mix(in srgb, var(--fg) 7%, var(--card));
+        border-color: color-mix(in srgb, var(--fg) 20%, var(--card));
+    }
+
+    .button.pressed {
+        background-color: color-mix(in srgb, var(--fg) 10%, var(--card));
+        border-color: color-mix(in srgb, var(--fg) 25%, var(--card));
+    }
+
+    body {
+        font-family: system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--fg);
     }
 </style>

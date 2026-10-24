@@ -1,0 +1,154 @@
+---
+import type {SvgComponent} from 'astro/types';
+
+interface Props {
+    icon: SvgComponent;
+    text: string;
+    href: string;
+}
+
+const {icon: Icon, text, href} = Astro.props;
+---
+
+<div class="card">
+    <div class="card-inner">
+        <div class="card-face">
+            <Icon width="190" height="237"/>
+        </div>
+        <div class="card-face card-back">
+            <Icon width="32" height="40"/>
+            <p>{text}</p>
+            <a class="open button" href={href} draggable="false">
+                Open
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        --tilt-x: 0deg;
+        --tilt-y: 0deg;
+        --flip-duration: 0.35s;
+        width: 230px;
+        aspect-ratio: 53.98 / 85.6;
+        perspective: 800px;
+        cursor: pointer;
+        user-select: none;
+        animation: float 7s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%,
+        100% {
+            transform: perspective(800px) translate(0, 0) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+        }
+        25% {
+            transform: perspective(800px) translate(5px, -9px) rotateX(4deg) rotateY(-5deg) rotateZ(-1deg);
+        }
+        50% {
+            transform: perspective(800px) translate(-4px, -3px) rotateX(-3deg) rotateY(4deg) rotateZ(1deg);
+        }
+        75% {
+            transform: perspective(800px) translate(-6px, -11px) rotateX(2deg) rotateY(3deg) rotateZ(-0.5deg);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .card {
+            animation: none;
+        }
+    }
+
+    .card-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+        transform: rotateX(var(--tilt-x)) rotateY(calc(var(--tilt-y) + var(--flip, 0deg)));
+        transition: transform calc(var(--flip-duration) / 2) ease-out;
+    }
+
+    .card.flipped .card-inner {
+        --flip: 180deg;
+    }
+
+    .card.flipping .card-inner {
+        transition-duration: var(--flip-duration);
+        transition-timing-function: cubic-bezier(0.3, 1.6, 0.5, 1);
+    }
+
+    .card-face {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        border-radius: 20px;
+        border: 1px solid var(--card-border);
+        background: var(--card);
+        color: var(--fg);
+        backface-visibility: hidden;
+    }
+
+    .card-back {
+        grid-template-rows: auto 1fr auto;
+        padding: 24px 16px 16px;
+        box-sizing: border-box;
+        transform: rotateY(180deg);
+    }
+
+    .card:not(.flipped) .card-back {
+        pointer-events: none;
+    }
+
+    .card-back p {
+        margin: 0;
+        text-align: center;
+    }
+
+    .open {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        width: 100%;
+        padding: 12px;
+        box-sizing: border-box;
+        border-radius: 12px;
+        font-size: 16px;
+        text-decoration: none;
+    }
+</style>
+
+<script>
+    const MAX_TILT = 15;
+    const FLIP_DURATION = 350;
+
+    for(const card of document.querySelectorAll<HTMLElement>('.card')) {
+        card.style.animationDuration = `${6 + Math.random() * 3}s`;
+        card.style.animationDelay = `${-Math.random() * 9}s`;
+
+        card.addEventListener('pointermove', (event) => {
+            const rect = card.getBoundingClientRect();
+            const x = (event.clientX - rect.left) / rect.width - 0.5;
+            const y = (event.clientY - rect.top) / rect.height - 0.5;
+            card.style.setProperty('--tilt-x', `${-y * 2 * MAX_TILT}deg`);
+            card.style.setProperty('--tilt-y', `${x * 2 * MAX_TILT}deg`);
+        });
+
+        card.addEventListener('pointerleave', () => {
+            card.style.setProperty('--tilt-x', '0deg');
+            card.style.setProperty('--tilt-y', '0deg');
+        });
+
+        card.addEventListener('click', (event) => {
+            if(event.target instanceof Element && event.target.closest('.open')) return;
+            card.classList.toggle('flipped');
+            card.classList.add('flipping');
+            setTimeout(() => card.classList.remove('flipping'), FLIP_DURATION);
+        });
+    }
+</script>

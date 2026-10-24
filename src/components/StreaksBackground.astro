@@ -1,0 +1,120 @@
+<canvas id="streaks" aria-hidden="true"></canvas>
+
+<style>
+    #streaks {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        pointer-events: none;
+        color: var(--streak);
+        opacity: 0.5;
+    }
+
+    :global(:root:not([data-background='streaks'])) #streaks {
+        display: none;
+    }
+</style>
+
+<script>
+    import {createFullscreenShader, readColor} from '../scripts/fullscreen-shader';
+
+    const FRAGMENT = `#version 300 es
+precision highp float;
+
+uniform vec2 uResolution;
+uniform float uPixelRatio;
+uniform float uTime;
+uniform vec4 uAccent;
+out vec4 outColor;
+
+const float BEND = 0.6;
+const float BEND_HEIGHT = 500.0;
+const float SPEED = 0.15;
+const float COLUMN = 0.08;
+const float PERIOD = 2.0;
+const float WIDTH = 0.003;
+const float TAIL = 3.5;
+const int LAYERS = 2;
+
+float hash(vec2 p) {
+	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+vec2 surface(vec2 frag) {
+	vec2 p = (2.0 * frag - uResolution) / uResolution.y;
+	float depth = max(1.0 - frag.y / (BEND_HEIGHT * uPixelRatio), 0.0);
+	return vec2(p.x / (1.0 + BEND * depth * depth), -p.y);
+}
+
+void main() {
+	vec2 uv = surface(gl_FragCoord.xy);
+	float aa = length(fwidth(uv));
+	float time = 0.05 * uTime + 9.0;
+	float light = 0.0;
+
+	for (int i = 0; i < LAYERS; i++) {
+		float column = floor(uv.x / COLUMN + 0.5);
+		float seed = hash(vec2(column, float(i)));
+		float dx = uv.x - column * COLUMN;
+		float s = uv.y - (SPEED * uTime + 9.0) * (1.0 + 0.5 * seed) - PERIOD * fract(7919.0 * seed);
+		s -= floor(s / PERIOD + 0.5) * PERIOD;
+
+		float head = length(vec2(dx, s));
+		float trail = s < 0.0 ? abs(dx) : head;
+		float line = 1.0 - smoothstep(-aa, aa, trail - WIDTH);
+		float glint = 1.0 - smoothstep(-aa, aa, head - WIDTH);
+		float twinkle = mix(1.5, 1.0 + sin(time + 7.0 * fract(8663.0 * seed) + 4.0), 0.85);
+
+		light += (line * exp(TAIL * min(s, 0.0)) + 3.0 * glint) * twinkle;
+		uv.x += COLUMN / float(LAYERS);
+	}
+
+	float alpha = sqrt(tanh(max(light * 0.5 - 0.04, 0.0))) * uAccent.a;
+	outColor = vec4(uAccent.rgb * alpha, alpha);
+}`;
+
+    const canvas = document.getElementById('streaks') as HTMLCanvasElement;
+    const {gl, program} = createFullscreenShader(canvas, FRAGMENT);
+
+    const uResolution = gl.getUniformLocation(program, 'uResolution');
+    const uPixelRatio = gl.getUniformLocation(program, 'uPixelRatio');
+    const uTime = gl.getUniformLocation(program, 'uTime');
+    const uAccent = gl.getUniformLocation(program, 'uAccent');
+    const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function draw(time: number) {
+        gl.uniform1f(uTime, time / 1000);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+
+    function resize() {
+        const dpr = Math.min(devicePixelRatio, 2);
+        canvas.width = Math.floor(innerWidth * dpr);
+        canvas.height = Math.floor(innerHeight * dpr);
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.uniform2f(uResolution, canvas.width, canvas.height);
+        gl.uniform1f(uPixelRatio, dpr);
+        if(reducedMotion) draw(0);
+    }
+
+    function updateAccent() {
+        gl.uniform4f(uAccent, ...readColor(canvas));
+        if(reducedMotion) draw(0);
+    }
+
+    resize();
+    updateAccent();
+    addEventListener('resize', resize);
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateAccent);
+    new MutationObserver(updateAccent).observe(document.documentElement, {attributeFilter: ['data-theme', 'data-background']});
+
+    if(!reducedMotion) {
+        const frame = (time: number) => {
+            if(canvas.checkVisibility()) draw(time);
+            requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+    }
+</script>

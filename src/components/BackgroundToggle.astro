@@ -1,0 +1,18 @@
+<button id="background-toggle" class="control button" type="button" aria-label="Switch background">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+        <path d="m12 3 9 5-9 5-9-5z M3 13l9 5 9-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path>
+    </svg>
+</button>
+
+<script>
+    const BACKGROUNDS = ['streaks', 'dots', 'tunnel'];
+    const root = document.documentElement;
+
+    if(!BACKGROUNDS.includes(root.dataset.background!)) root.dataset.background = BACKGROUNDS[0];
+
+    document.getElementById('background-toggle')!.addEventListener('click', () => {
+        const next = BACKGROUNDS[(BACKGROUNDS.indexOf(root.dataset.background!) + 1) % BACKGROUNDS.length];
+        root.dataset.background = next;
+        localStorage.setItem('background', next);
+    });
+</script>

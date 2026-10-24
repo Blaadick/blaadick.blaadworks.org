@@ -1,11 +1,26 @@
 ---
-import Welcome from '../components/Welcome.astro';
+import AstroLogo from '../assets/astro-logo.svg';
+import Card from '../components/Card.astro';
 import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
 ---
 
 <Layout>
-    <Welcome/>
+    <main>
+        <Card icon={AstroLogo} text="Something fun is coming here soon" href="#"/>
+        <Card icon={AstroLogo} text="Something fun is coming here soon" href="#"/>
+        <Card icon={AstroLogo} text="Something fun is coming here soon" href="#"/>
+    </main>
 </Layout>
+
+<style>
+    main {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 48px;
+        min-height: 100%;
+        padding: 32px 16px;
+        box-sizing: border-box;
+    }
+</style>

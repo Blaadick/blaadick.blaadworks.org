@@ -1,0 +1,127 @@
+<canvas id="dots" aria-hidden="true"></canvas>
+
+<style>
+    #dots {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        pointer-events: none;
+        color: var(--streak);
+        opacity: 0.5;
+    }
+
+    :global(:root:not([data-background='dots'])) #dots {
+        display: none;
+    }
+</style>
+
+<script>
+    import {createFullscreenShader, readColor} from '../scripts/fullscreen-shader';
+
+    const EASING = 0.15;
+    const SPACING = 64;
+
+    const FRAGMENT = `#version 300 es
+precision highp float;
+
+uniform vec2 uResolution;
+uniform float uPixelRatio;
+uniform vec4 uColor;
+uniform vec2 uMouse;
+uniform float uStrength;
+uniform vec2 uSpacing;
+out vec4 outColor;
+
+const float RADIUS = 1.5;
+const float PUSH = 5.0;
+const float REACH = 120.0;
+
+void main() {
+	vec2 pos = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y) / uPixelRatio;
+	vec2 cell = floor(pos / uSpacing);
+	float aa = 0.75 / uPixelRatio;
+	float light = 0.0;
+
+	for (int j = -1; j <= 1; j++) {
+		for (int i = -1; i <= 1; i++) {
+			vec2 center = (cell + vec2(i, j) + 0.5) * uSpacing;
+			vec2 away = center - uMouse;
+			float distance = max(length(away), 0.001);
+			float push = PUSH * exp(-distance * distance / (REACH * REACH)) * uStrength;
+			vec2 point = center + away / distance * push;
+			light = max(light, 1.0 - smoothstep(RADIUS - aa, RADIUS + aa, length(pos - point)));
+		}
+	}
+
+	float alpha = light * uColor.a;
+	outColor = vec4(uColor.rgb * alpha, alpha);
+}`;
+
+    const canvas = document.getElementById('dots') as HTMLCanvasElement;
+    const {gl, program} = createFullscreenShader(canvas, FRAGMENT);
+
+    const uResolution = gl.getUniformLocation(program, 'uResolution');
+    const uPixelRatio = gl.getUniformLocation(program, 'uPixelRatio');
+    const uColor = gl.getUniformLocation(program, 'uColor');
+    const uMouse = gl.getUniformLocation(program, 'uMouse');
+    const uStrength = gl.getUniformLocation(program, 'uStrength');
+    const uSpacing = gl.getUniformLocation(program, 'uSpacing');
+    const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const mouse = {x: 0, y: 0, strength: 0};
+    const target = {x: 0, y: 0, strength: 0};
+
+    function draw() {
+        gl.uniform2f(uMouse, mouse.x, mouse.y);
+        gl.uniform1f(uStrength, mouse.strength);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+
+    function resize() {
+        const dpr = Math.min(devicePixelRatio, 2);
+        canvas.width = Math.floor(innerWidth * dpr);
+        canvas.height = Math.floor(innerHeight * dpr);
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.uniform2f(uResolution, canvas.width, canvas.height);
+        gl.uniform1f(uPixelRatio, dpr);
+        gl.uniform2f(uSpacing, innerWidth / Math.round(innerWidth / SPACING), innerHeight / Math.round(innerHeight / SPACING));
+        draw();
+    }
+
+    function updateColor() {
+        gl.uniform4f(uColor, ...readColor(canvas));
+        draw();
+    }
+
+    resize();
+    updateColor();
+    addEventListener('resize', resize);
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateColor);
+    new MutationObserver(updateColor).observe(document.documentElement, {attributeFilter: ['data-theme', 'data-background']});
+
+    if(!reducedMotion) {
+        addEventListener('pointermove', (event) => {
+            if(mouse.strength < 0.01) {
+                mouse.x = event.clientX;
+                mouse.y = event.clientY;
+            }
+            target.x = event.clientX;
+            target.y = event.clientY;
+            target.strength = 1;
+        });
+        document.documentElement.addEventListener('pointerleave', () => (target.strength = 0));
+
+        const frame = () => {
+            if(canvas.checkVisibility()) {
+                mouse.x += (target.x - mouse.x) * EASING;
+                mouse.y += (target.y - mouse.y) * EASING;
+                mouse.strength += (target.strength - mouse.strength) * EASING;
+                draw();
+            }
+            requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+    }
+</script>

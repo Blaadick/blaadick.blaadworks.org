@@ -1,0 +1,115 @@
+<canvas id="tunnel" aria-hidden="true"></canvas>
+
+<style>
+    #tunnel {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        pointer-events: none;
+        color: var(--fg);
+        outline-color: var(--streak);
+    }
+
+    :global(:root:not([data-background='tunnel'])) #tunnel {
+        display: none;
+    }
+</style>
+
+<script>
+    import {createFullscreenShader, readColor} from '../scripts/fullscreen-shader';
+
+    const FRAGMENT = `#version 300 es
+precision highp float;
+
+uniform vec2 uResolution;
+uniform float uTime;
+uniform vec4 uLines;
+uniform vec4 uScan;
+out vec4 outColor;
+
+const vec2 HALF = vec2(0.5, 0.2);
+const float CELL = 0.2;
+const float FOCAL = 2.0;
+const float ASPECT = 16.0 / 9.0;
+const float FADE = 2.8;
+const float SCAN_DURATION = 2.0;
+const float SCAN_DELAY = 2.0;
+const float SCAN_DEPTH = 2.0;
+const float SCAN_WIDTH = 0.16;
+const float TAPER = 0.49;
+const float SCAN_OPACITY = 0.5;
+
+float smoother(float x) {
+	x = clamp(x, 0.0, 1.0);
+	return x * x * x * (x * (x * 6.0 - 15.0) + 10.0);
+}
+
+void main() {
+	vec2 p = (2.0 * gl_FragCoord.xy / uResolution - 1.0) * vec2(ASPECT, 1.0);
+	vec3 ray = normalize(vec3(p, FOCAL));
+	vec2 walls = HALF / max(abs(ray.xy), 1e-5);
+	float t = min(walls.x, walls.y);
+	vec3 hit = ray * t;
+
+	vec2 grid = (walls.y < walls.x ? vec2(hit.x + HALF.x, hit.z) : vec2(hit.y + HALF.y, hit.z)) / CELL;
+	vec2 width = fwidth(grid);
+	vec2 edge = abs(fract(grid + 0.5) - 0.5);
+	vec2 lines = 1.0 - smoothstep(0.5 * width, 1.5 * width, edge);
+	float line = max(lines.x, lines.y);
+
+	float phase = clamp((mod(uTime, SCAN_DURATION + SCAN_DELAY) - SCAN_DELAY) / SCAN_DURATION, 0.0, 1.0);
+	float window = smoother(phase / TAPER) * (1.0 - smoother((phase - 1.0 + TAPER) / TAPER));
+	float dz = hit.z - phase * SCAN_DEPTH;
+	float band = exp(-0.5 * dz * dz / (SCAN_WIDTH * SCAN_WIDTH));
+	float aura = 0.25 * exp(-0.125 * dz * dz / (SCAN_WIDTH * SCAN_WIDTH));
+	float scan = min((band + aura) * window, 1.0);
+
+	float alpha = line * max(exp(-t * FADE) * uLines.a, scan * uScan.a * SCAN_OPACITY);
+	outColor = vec4(mix(uLines.rgb, uScan.rgb, scan) * alpha, alpha);
+}`;
+
+    const canvas = document.getElementById('tunnel') as HTMLCanvasElement;
+    const {gl, program} = createFullscreenShader(canvas, FRAGMENT);
+
+    const uResolution = gl.getUniformLocation(program, 'uResolution');
+    const uTime = gl.getUniformLocation(program, 'uTime');
+    const uLines = gl.getUniformLocation(program, 'uLines');
+    const uScan = gl.getUniformLocation(program, 'uScan');
+    const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function draw(time: number) {
+        gl.uniform1f(uTime, time / 1000);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+
+    function resize() {
+        const dpr = Math.min(devicePixelRatio, 2);
+        canvas.width = Math.floor(innerWidth * dpr);
+        canvas.height = Math.floor(innerHeight * dpr);
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.uniform2f(uResolution, canvas.width, canvas.height);
+        if(reducedMotion) draw(0);
+    }
+
+    function updateColor() {
+        gl.uniform4f(uLines, ...readColor(canvas));
+        gl.uniform4f(uScan, ...readColor(canvas, 'outline-color'));
+        if(reducedMotion) draw(0);
+    }
+
+    resize();
+    updateColor();
+    addEventListener('resize', resize);
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateColor);
+    new MutationObserver(updateColor).observe(document.documentElement, {attributeFilter: ['data-theme', 'data-background']});
+
+    if(!reducedMotion) {
+        const frame = (time: number) => {
+            if(canvas.checkVisibility()) draw(time);
+            requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+    }
+</script>
