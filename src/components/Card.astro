@@ -87,7 +87,8 @@ const {icon: Icon, text, href} = Astro.props;
         display: grid;
         place-items: center;
         border-radius: 20px;
-        border: 1px solid var(--card-border);
+        outline: 1px solid transparent;
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--card-border) 65%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--card-border) 65%, transparent);
         background: var(--card);
         color: var(--fg);
         backface-visibility: hidden;
@@ -97,6 +98,7 @@ const {icon: Icon, text, href} = Astro.props;
         grid-template-rows: auto 1fr auto;
         padding: 24px 16px 16px;
         box-sizing: border-box;
+        text-shadow: 0 0 0.5px currentColor;
         transform: rotateY(180deg);
     }
 
