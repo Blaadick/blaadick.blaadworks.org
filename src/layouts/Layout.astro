@@ -1,9 +1,39 @@
 ---
-import BackgroundToggle from '../components/BackgroundToggle.astro';
-import DotsBackground from '../components/DotsBackground.astro';
-import StreaksBackground from '../components/StreaksBackground.astro';
-import ThemeToggle from '../components/ThemeToggle.astro';
-import TunnelBackground from '../components/TunnelBackground.astro';
+import BackgroundToggle from "../components/BackgroundToggle.astro";
+import DotsBackground from "../components/DotsBackground.astro";
+import StreaksBackground from "../components/StreaksBackground.astro";
+import ThemeToggle from "../components/ThemeToggle.astro";
+import TunnelBackground from "../components/TunnelBackground.astro";
+
+interface Props {
+    title?: string;
+    description?: string;
+}
+
+const {title = "Blaadick", description = "Blaadick\'s personal site: toys, experiments and small pages."} = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+        {
+            "@type": "WebSite",
+            name: "Blaadick",
+            url: Astro.site,
+        },
+        {
+            "@type": "Person",
+            name: "Blaadick",
+            url: Astro.site,
+            sameAs: [
+                "https://github.com/Blaadick",
+                "https://www.youtube.com/@blaadick",
+                "https://www.twitch.tv/blaadick",
+                "https://www.patreon.com/cw/blaadick",
+                "https://modrinth.com/user/Blaadick"
+            ],
+        },
+    ],
+};
 ---
 
 <!doctype html>
@@ -13,17 +43,26 @@ import TunnelBackground from '../components/TunnelBackground.astro';
     <meta name="viewport" content="width=device-width"/>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
     <meta name="generator" content={Astro.generator}/>
-    <title>Astro Basics</title>
+    <title>{title}</title>
+    <meta name="description" content={description}/>
+    <meta name="author" content="Blaadick"/>
+    <link rel="canonical" href={canonical}/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:site_name" content="Blaadick"/>
+    <meta property="og:title" content={title}/>
+    <meta property="og:description" content={description}/>
+    <meta property="og:url" content={canonical}/>
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData)}/>
     <script is:inline>
-        document.documentElement.dataset.background = localStorage.getItem('background') ?? 'streaks';
-        document.addEventListener('contextmenu', (event) => event.preventDefault());
-        document.addEventListener('pointerdown', (event) => {
-            const button = event.button === 0 && event.target.closest('.button');
+        document.documentElement.dataset.background = localStorage.getItem("background") ?? "streaks";
+        document.addEventListener("contextmenu", (event) => event.preventDefault());
+        document.addEventListener("pointerdown", (event) => {
+            const button = event.button === 0 && event.target.closest(".button");
             if(!button) return;
-            button.classList.add('pressed');
-            const release = () => button.classList.remove('pressed');
-            document.addEventListener('pointerup', release, {once: true});
-            document.addEventListener('pointercancel', release, {once: true});
+            button.classList.add("pressed");
+            const release = () => button.classList.remove("pressed");
+            document.addEventListener("pointerup", release, {once: true});
+            document.addEventListener("pointercancel", release, {once: true});
         });
     </script>
 </head>
@@ -50,11 +89,11 @@ import TunnelBackground from '../components/TunnelBackground.astro';
         --streak: light-dark(rgb(96 37 196 / 0.9), #b56cff);
     }
 
-    :root[data-theme='light'] {
+    :root[data-theme="light"] {
         color-scheme: light;
     }
 
-    :root[data-theme='dark'] {
+    :root[data-theme="dark"] {
         color-scheme: dark;
     }
 
