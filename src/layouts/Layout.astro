@@ -2,7 +2,6 @@
 import BackgroundToggle from "../components/BackgroundToggle.astro";
 import DotsBackground from "../components/DotsBackground.astro";
 import StreaksBackground from "../components/StreaksBackground.astro";
-import ThemeToggle from "../components/ThemeToggle.astro";
 import TunnelBackground from "../components/TunnelBackground.astro";
 
 interface Props {
@@ -72,7 +71,6 @@ const structuredData = {
 <TunnelBackground/>
 <div class="controls">
     <BackgroundToggle/>
-    <ThemeToggle/>
 </div>
 <slot/>
 </body>
@@ -89,14 +87,6 @@ const structuredData = {
         --streak: light-dark(rgb(96 37 196 / 0.9), #b56cff);
     }
 
-    :root[data-theme="light"] {
-        color-scheme: light;
-    }
-
-    :root[data-theme="dark"] {
-        color-scheme: dark;
-    }
-
     html,
     body {
         margin: 0;
@@ -106,7 +96,7 @@ const structuredData = {
 
     .controls {
         position: fixed;
-        top: 16px;
+        bottom: 16px;
         right: 16px;
         z-index: 1;
         display: flex;

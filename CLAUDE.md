@@ -32,7 +32,7 @@ Personal site of Blaadick: a home page plus assorted fun stuff (toys, experiment
 - `src/assets/` — images/SVGs processed by Astro (imported in components).
 - `public/` — files served as-is (favicons, etc.).
 
-`Layout.astro` renders on every page: all backgrounds, and the top-right `.controls` with the background and theme toggles (`BackgroundToggle.astro`, `ThemeToggle.astro`, both styled by the global `.control` class for shape and `.button` for look). `.button` (global, in `Layout.astro`) is the shared monochrome button style with hover and pressed steps (`.pressed` is set by the head script on left-button press only, so right-click does not look pressed); the card's Open link uses it too. `README.md` is still the starter template's.
+`Layout.astro` renders on every page: all backgrounds, and the bottom-right `.controls` with the background toggle (`BackgroundToggle.astro`, styled by the global `.control` class for shape and `.button` for look). `.button` (global, in `Layout.astro`) is the shared monochrome button style with hover and pressed steps (`.pressed` is set by the head script on left-button press only, so right-click does not look pressed); the card's Open link uses it too. `README.md` is still the starter template's.
 
 ## Backgrounds
 
@@ -43,7 +43,7 @@ Personal site of Blaadick: a home page plus assorted fun stuff (toys, experiment
 
 ## Theming
 
-- Light and dark themes following `prefers-color-scheme`. The toggle sets `data-theme` on `<html>` for the current page only (not persisted); a system scheme change removes it so the site follows the system again.
+- Light and dark themes following `prefers-color-scheme` only; there is no manual theme toggle.
 - Colors are CSS variables in `Layout.astro` defined with `light-dark()`: `--bg`, `--fg`, `--accent` (purple), `--streak` (background streak color; its alpha balances streak visibility between themes). Use them instead of hardcoded colors.
 - Streaks and dots are colored with `--streak`; backgrounds read their colors from computed styles of their canvas and update on theme change.
 

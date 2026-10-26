@@ -99,7 +99,7 @@ void main() {
     updateColor();
     addEventListener('resize', resize);
     matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateColor);
-    new MutationObserver(updateColor).observe(document.documentElement, {attributeFilter: ['data-theme', 'data-background']});
+    new MutationObserver(updateColor).observe(document.documentElement, {attributeFilter: ['data-background']});
 
     if(!reducedMotion) {
         addEventListener('pointermove', (event) => {
