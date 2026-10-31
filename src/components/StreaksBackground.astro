@@ -108,7 +108,7 @@ void main() {
     updateAccent();
     addEventListener('resize', resize);
     matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateAccent);
-    new MutationObserver(updateAccent).observe(document.documentElement, {attributeFilter: ['data-background']});
+    new MutationObserver(updateAccent).observe(document.documentElement, {attributeFilter: ['data-theme', 'data-background']});
 
     if(!reducedMotion) {
         const frame = (time: number) => {

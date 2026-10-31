@@ -1,0 +1,29 @@
+<button id="language-toggle" class="control button" type="button" aria-label="Switch language">
+    <svg data-icon="system" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m5 8 6 6"></path>
+        <path d="m4 14 6-6 2-3"></path>
+        <path d="M2 5h12"></path>
+        <path d="M7 2h1"></path>
+        <path d="m22 22-5-10-5 10"></path>
+        <path d="M14 18h6"></path>
+    </svg>
+    <span data-icon="en" aria-hidden="true">EN</span>
+    <span data-icon="ru" aria-hidden="true">RU</span>
+</button>
+
+<style>
+    span {
+        font-size: 12px;
+        font-weight: 600;
+    }
+</style>
+
+<script>
+    import {setupCycleToggle} from '../scripts/cycle-toggle';
+
+    const LANGUAGES = ['system', 'en', 'ru'];
+
+    setupCycleToggle('language-toggle', 'language', LANGUAGES, (language) => {
+        document.documentElement.lang = language === 'system' ? (navigator.language.startsWith('ru') ? 'ru' : 'en') : language;
+    });
+</script>

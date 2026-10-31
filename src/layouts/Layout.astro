@@ -1,6 +1,6 @@
 ---
-import BackgroundToggle from "../components/BackgroundToggle.astro";
 import DotsBackground from "../components/DotsBackground.astro";
+import SettingsMenu from "../components/SettingsMenu.astro";
 import StreaksBackground from "../components/StreaksBackground.astro";
 import TunnelBackground from "../components/TunnelBackground.astro";
 
@@ -54,6 +54,8 @@ const structuredData = {
     <script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData)}/>
     <script is:inline>
         document.documentElement.dataset.background = localStorage.getItem("background") ?? "streaks";
+        const theme = localStorage.getItem("theme");
+        if(theme === "dark" || theme === "light") document.documentElement.dataset.theme = theme;
         document.addEventListener("contextmenu", (event) => event.preventDefault());
         document.addEventListener("pointerdown", (event) => {
             const button = event.button === 0 && event.target.closest(".button");
@@ -70,7 +72,7 @@ const structuredData = {
 <DotsBackground/>
 <TunnelBackground/>
 <div class="controls">
-    <BackgroundToggle/>
+    <SettingsMenu/>
 </div>
 <slot/>
 </body>
@@ -85,6 +87,14 @@ const structuredData = {
         --card-border: light-dark(#d6d6d6, #2a2a2a);
         --accent: light-dark(#6025c4, #b56cff);
         --streak: light-dark(rgb(96 37 196 / 0.9), #b56cff);
+    }
+
+    :root[data-theme="light"] {
+        color-scheme: light;
+    }
+
+    :root[data-theme="dark"] {
+        color-scheme: dark;
     }
 
     html,
